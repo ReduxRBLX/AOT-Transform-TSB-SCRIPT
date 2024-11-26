@@ -316,9 +316,10 @@ toggle.MouseButton1Click:Connect(function()
 			local anim = Instance.new("Animation")
 			anim.AnimationId = "rbxassetid://17086333563"
 			anim.Name = "Shift"
-			anim:AdjustSpeed(0.5)
 
-			hum.Animator:LoadAnimation(anim):Play()
+			local loadedAnim = hum.Animator:LoadAnimation(anim)
+			loadedAnim:Play()
+			loadedAnim:AdjustSpeed(0.5)
 
 			hum:GetPropertyChangedSignal("MoveDirection"):Connect(function()
 				if hum.MoveDirection.Magnitude > 0 then
