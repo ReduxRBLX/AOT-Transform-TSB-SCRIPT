@@ -314,7 +314,7 @@ toggle.MouseButton1Click:Connect(function()
 			transformMain:Destroy()
 
 			local anim = Instance.new("Animation")
-			anim.AnimationId = "rbxassetid://17086423985"
+			anim.AnimationId = "rbxassetid://17086333563"
 			anim.Name = "Shift"
 
 			hum.Animator:LoadAnimation(anim):Play()
