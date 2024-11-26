@@ -1,0 +1,433 @@
+local ts = game:GetService("TweenService")
+local cam = workspace.CurrentCamera
+
+local function tweenModel(model, scale)
+	local numValue = Instance.new("NumberValue")
+	numValue.Parent = model
+	numValue.Value = model:GetScale()
+ 
+	local targetScale = scale
+
+	local tweenInfo = TweenInfo.new(1,Enum.EasingStyle.Linear,Enum.EasingDirection.InOut)
+	ts:Create(numValue, tweenInfo, {Value = targetScale}):Play()
+
+	numValue.Changed:Connect(function(value)
+		model:ScaleTo(value)
+	end)
+end
+
+local function fadeUI(FadeFrame)
+	local wrap
+
+	wrap = task.spawn(function()
+		local function hasProperty(object, prop)
+			local t = object[prop]
+		end
+
+		local fadedObjs = {}
+
+		for i, v in pairs(FadeFrame:GetChildren()) do
+			local success = pcall(function() hasProperty(v, "Visible") end)
+
+			if success then
+				if v.Visible == true and v.Name ~= "RefusedText" then
+					v.Visible = false
+					table.insert(fadedObjs, v)
+				end
+			end
+		end
+
+		local prevTransparency = FadeFrame.BackgroundTransparency
+
+		local Framefade = ts:Create(FadeFrame, TweenInfo.new(1), {BackgroundTransparency = 1})
+		Framefade:Play()
+		Framefade.Completed:Wait()
+		FadeFrame.Visible = false
+
+		FadeFrame.BackgroundTransparency = prevTransparency
+
+		for i, v in pairs(fadedObjs) do
+			local success = pcall(function() hasProperty(v, "Visible") end)
+
+			if success then
+				v.Visible = true
+			end
+		end
+		coroutine.yield()
+		coroutine.close(wrap)
+	end)
+end
+
+local plr
+local char 
+local hum
+
+local enabledInt
+local toggle
+local UI
+
+local function enable()
+	plr = game:GetService("Players").LocalPlayer
+	char = plr.Character or plr.CharacterAdded:Wait()
+	hum = char:WaitForChild("Humanoid")
+	
+	if not plr:FindFirstChild("Transformed") then
+		enabledInt = Instance.new("BoolValue", plr)
+		enabledInt.Name = "Transformed"
+		enabledInt.Value = false
+	else
+		enabledInt = plr:FindFirstChild("Transformed") 
+		enabledInt:Destroy()
+		
+		enabledInt = Instance.new("BoolValue", plr)
+		enabledInt.Name = "Transformed"
+		enabledInt.Value = false
+	end
+	
+	if not plr.PlayerGui:FindFirstChild("AOTScript") then
+		UI = Instance.new("ScreenGui", plr.PlayerGui)
+		UI.Name = "AOTScript"
+		UI.IgnoreGuiInset = true
+		UI.ResetOnSpawn = false
+	else
+		UI = plr.PlayerGui:FindFirstChild("AOTScript")
+	end
+	
+	local cred
+	
+	if not UI:FindFirstChild("Credits") then
+		cred = Instance.new("TextLabel", UI)
+		cred.Name = "Credits"
+		cred.BackgroundTransparency = 1
+		cred.Position = UDim2.new(0.006, 0, 0.257, 0)
+		cred.Size = UDim2.new(0.132, 0, 0.049, 0)
+		cred.Font = Enum.Font.Code
+		cred.FontFace.Style = Enum.FontStyle.Italic
+		cred.FontFace.Weight = Enum.FontWeight.Bold
+		cred.Text = '"AOT TRANSFORM" - Made by ReduxRBLX'
+		cred.TextColor3 = Color3.fromRGB(255, 255, 255)
+		cred.TextScaled = true
+		cred.TextStrokeTransparency = 0.85
+	else
+		cred = UI:FindFirstChild("Credits")
+		cred.Text = '"AOT TRANSFORM" - Made by ReduxRBLX'
+	end
+
+	if not UI:FindFirstChild("Button") then	
+		toggle = Instance.new("TextButton", UI)
+		toggle.Name = "Button"
+		toggle.BackgroundColor3 = Color3.fromRGB(255, 255, 0)
+		toggle.BackgroundTransparency = 0.75
+		toggle.Position = UDim2.new(0.006, 0, 0.317, 0)
+		toggle.Size = UDim2.new(0.132, 0, 0.028, 0)
+		toggle.Font = Enum.Font.Code
+		toggle.Text = 'SHIFT'
+		toggle.RichText = true
+		toggle.TextScaled = true
+	else
+		toggle = UI:FindFirstChild("Button")
+		toggle.Text = 'SHIFT'
+	end
+	
+	local uiCorner
+
+	if not toggle:FindFirstChild("UICorner") then	
+		uiCorner = Instance.new("UICorner", toggle)
+	else
+		uiCorner = toggle:FindFirstChild("UICorner")
+	end
+	
+	local uiStroke
+	
+	if not toggle:FindFirstChild("UIStroke") then	
+		uiStroke = Instance.new("UIStroke", toggle)
+		uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		uiStroke.Color = Color3.fromRGB(0,0,0)
+		uiStroke.Thickness = 1.5
+	else
+		uiStroke = toggle:FindFirstChild("UIStroke")
+	end
+end
+
+enable()
+
+toggle.MouseButton1Click:Connect(function()
+	if hum and hum.Health > 0 then
+		if enabledInt.Value == false then
+			toggle.Visible = false
+			toggle.Text = 'UNSHIFT'
+			enabledInt.Value = true
+
+			char.HumanoidRootPart.Anchored = true
+
+			local transparentParts = {}
+			local transparentDecals = {}
+
+			for i, v in pairs(char:GetDescendants()) do
+				if v:IsA("BasePart") and v.Transparency == 0 then
+					v.Transparency = 1
+					table.insert(transparentParts, v)
+				end
+			end
+
+			for i, v in pairs(char:GetDescendants()) do
+				if v:IsA("Decal") then
+					v.Transparency = 1
+					table.insert(transparentDecals, v)
+				end
+			end
+
+			local frame = Instance.new("Frame", UI)
+			frame.BackgroundColor3 = Color3.fromRGB(255, 170, 0)
+			frame.BackgroundTransparency = 0.75
+			frame.Size = UDim2.new(1, 0, 1, 0)
+			frame.Visible = true
+
+			cam.FieldOfView = 90
+
+			local transformMain = Instance.new("Part", workspace)
+			transformMain.Name = "Transform"
+			transformMain.Shape = Enum.PartType.Cylinder
+			transformMain.Color = Color3.fromRGB(255, 255, 0)
+			transformMain.Transparency = 0.95
+			transformMain.Material = Enum.Material.ForceField
+			transformMain.CanCollide = false transformMain.CanTouch = false transformMain.CastShadow = false
+			transformMain.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0,-5, 0)
+			transformMain.Orientation = Vector3.new(0, 90, 90) transformMain.Size = Vector3.new(500, 10, 11)
+			transformMain.Anchored = true transformMain.Massless = true
+
+			transformMain.FrontSurface = Enum.SurfaceType.Smooth transformMain.BackSurface = Enum.SurfaceType.Smooth
+			transformMain.LeftSurface = Enum.SurfaceType.Smooth transformMain.RightSurface = Enum.SurfaceType.Smooth
+			transformMain.TopSurface = Enum.SurfaceType.Smooth transformMain.BottomSurface = Enum.SurfaceType.Smooth
+
+			local lines = Instance.new("ParticleEmitter", transformMain)
+			lines.Color = ColorSequence.new(Color3.fromRGB(255, 255, 0))
+			lines.LightEmission = 1 lines.LightInfluence = 1
+			lines.Orientation = Enum.ParticleOrientation.VelocityParallel
+			lines.Size = NumberSequence.new(3) lines.Squash = NumberSequence.new(2)	
+			lines.Texture = "rbxassetid://7216848401"
+			lines.Transparency = NumberSequence.new(0.5) lines.EmissionDirection = Enum.NormalId.Left
+			lines.Lifetime = NumberRange.new(1) lines.Rate = 200
+			lines.Rotation = NumberRange.new(-90) lines.Speed = NumberRange.new(45)	
+			lines.Shape = Enum.ParticleEmitterShape.Disc lines.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
+			lines.ShapePartial = 4 lines.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+			lines.LockedToPart = true
+
+			local specs = Instance.new("ParticleEmitter", transformMain)
+			specs.Brightness = 3
+			specs.Color = ColorSequence.new(Color3.fromRGB(255, 85, 0))
+			specs.LightEmission = 1 specs.LightInfluence = 0
+			specs.Orientation = Enum.ParticleOrientation.FacingCamera
+			specs.Size = NumberSequence.new(1, 1.13)	
+			specs.Texture = "rbxassetid://10567383038"
+			specs.Transparency = NumberSequence.new(0, 1) specs.EmissionDirection = Enum.NormalId.Left
+			specs.ZOffset = -0.1
+			specs.Lifetime = NumberRange.new(0.25) specs.Rate = 100
+			specs.Rotation = NumberRange.new(-360, 360) specs.RotSpeed = NumberRange.new(-75, 75) specs.Speed = NumberRange.new(1.7, 3.8)	
+			specs.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
+			specs.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+			specs.LockedToPart = true
+
+			local upward = Instance.new("ParticleEmitter", transformMain)
+			upward.Brightness = 3
+			upward.Color = ColorSequence.new(Color3.fromRGB(255, 255, 0))
+			upward.LightEmission = 0 upward.LightInfluence = 0
+			upward.Orientation = Enum.ParticleOrientation.VelocityParallel
+			upward.Size = NumberSequence.new(1, 5) upward.Squash = NumberSequence.new(0.5, 0.75)	
+			upward.Texture = "http://www.roblox.com/asset/?id=13712001736"
+			upward.Transparency = NumberSequence.new(0.25) upward.EmissionDirection = Enum.NormalId.Left
+			upward.ZOffset = -1
+			upward.Lifetime = NumberRange.new(1) upward.Rate = 100
+			upward.Rotation = NumberRange.new(-90) upward.Speed = NumberRange.new(-65)	
+			upward.Shape = Enum.ParticleEmitterShape.Disc upward.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
+			upward.ShapePartial = 4 upward.ShapeStyle = Enum.ParticleEmitterShapeStyle.Surface
+			upward.LockedToPart = true
+
+			local lightning = Instance.new("ParticleEmitter", transformMain)
+			lightning.Brightness = 3
+			lightning.Color = ColorSequence.new(Color3.fromRGB(255, 255, 0))
+			lightning.LightEmission = 0 lightning.LightInfluence = 0
+			lightning.Orientation = Enum.ParticleOrientation.VelocityParallel
+			lightning.Size = NumberSequence.new(5) lightning.Squash = NumberSequence.new(0.5, 0.16)	
+			lightning.Texture = "rbxassetid://11492870634"
+			lightning.Transparency = NumberSequence.new(0.25) lightning.EmissionDirection = Enum.NormalId.Left
+			lightning.ZOffset = 1
+			lightning.Lifetime = NumberRange.new(0.35, 0.45) lightning.Rate = 100
+			lightning.Rotation = NumberRange.new(-360, 360) lightning.RotSpeed = NumberRange.new(-100, 100) lightning.Speed = NumberRange.new(35) lightning.SpreadAngle = Vector2.new(15, 15)	
+			lightning.Shape = Enum.ParticleEmitterShape.Disc lightning.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
+			lightning.ShapePartial = 2.5 lightning.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+			lightning.FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4 lightning.FlipbookFramerate = NumberRange.new(35, 35) 
+			lightning.FlipbookMode = Enum.ParticleFlipbookMode.Loop lightning.FlipbookStartRandom = false lightning.LockedToPart = true
+			lightning.Drag = 5 lightning.Acceleration = Vector3.new(0, 10, 0)
+
+			local b = Instance.new("Attachment", transformMain)
+			b.WorldPosition = transformMain.Position + Vector3.new(0, 3, 0)
+			local T = Instance.new("Attachment", transformMain)
+			T.WorldPosition = transformMain.Position + Vector3.new(0, 500, 0)
+
+			local bVFX = Instance.new("ParticleEmitter", b)
+			bVFX.Color = ColorSequence.new(Color3.fromRGB(255, 255, 0))
+			bVFX.LightEmission = 1 bVFX.LightInfluence = 1
+			bVFX.Orientation = Enum.ParticleOrientation.VelocityPerpendicular
+			bVFX.Size = NumberSequence.new(15)
+			bVFX.Texture = "rbxassetid://13370283312"
+			bVFX.Transparency = NumberSequence.new(0.75) bVFX.EmissionDirection = Enum.NormalId.Left
+			bVFX.Lifetime = NumberRange.new(0.75) bVFX.Rate = 7.5
+			bVFX.Rotation = NumberRange.new(-360, 360) bVFX.RotSpeed = NumberRange.new(-100, 100) bVFX.Speed = NumberRange.new(0.001)
+			bVFX.FlipbookLayout = Enum.ParticleFlipbookLayout.Grid2x2 bVFX.FlipbookFramerate = NumberRange.new(5) 
+			bVFX.FlipbookMode = Enum.ParticleFlipbookMode.Loop bVFX.FlipbookStartRandom = false 
+			bVFX.LockedToPart = true
+
+			local beam = Instance.new("Beam", T)
+			beam.Color = ColorSequence.new(Color3.fromRGB(255, 255, 0))
+			beam.LightEmission = 1 beam.LightInfluence = 1
+			beam.TextureLength = 0.35
+			beam.Texture = "rbxassetid://12414458390"
+			beam.TextureMode = Enum.TextureMode.Stretch beam.TextureSpeed = -1
+			beam.Transparency = NumberSequence.new(1, 0.35)
+			beam.ZOffset = 1
+			beam.Attachment0 = T beam.Attachment1 = b
+			beam.FaceCamera = true
+			beam.Segments = 10 beam.Width0 = 11 beam.Width1 = 11
+
+			local beam2 = Instance.new("Beam", T)
+			beam2.Color = ColorSequence.new(Color3.fromRGB(255, 255, 0))
+			beam2.LightEmission = 1 beam2.LightInfluence = 1
+			beam2.TextureLength = 0.75
+			beam2.Texture = "rbxassetid://13712010201"
+			beam2.TextureMode = Enum.TextureMode.Stretch beam2.TextureSpeed = -3
+			beam2.Transparency = NumberSequence.new(1, 0.75)
+			beam2.ZOffset = 1
+			beam2.Attachment0 = T beam2.Attachment1 = b
+			beam2.FaceCamera = true
+			beam2.Segments = 10 beam.Width0 = 15 beam.Width1 = 15
+
+			local shiftSound = Instance.new("Sound", workspace)
+			shiftSound.SoundId = "rbxassetid://6956875383"
+			shiftSound.Volume = 0.65
+			shiftSound:Play()
+
+			shiftSound.Ended:Wait()
+			cam.FieldOfView = 70
+			fadeUI(frame)
+			shiftSound:Destroy()
+			transformMain:Destroy()
+
+			local anim = Instance.new("Animation")
+			anim.AnimationId = "rbxassetid://15968649951"
+			anim.Name = "Shift"
+
+			hum.Animator:LoadAnimation(anim):Play()
+
+			hum:GetPropertyChangedSignal("MoveDirection"):Connect(function()
+				if hum.MoveDirection.Magnitude > 0 then
+					for i, v in pairs(hum:GetPlayingAnimationTracks()) do
+						if v.Name == "Shift" then
+							v:Stop()
+						end
+					end
+				end
+			end)
+			
+			local roar = Instance.new("Sound", workspace)
+			roar.SoundId = "rbxassetid://7182253058"
+			roar.Volume = 0.7
+			roar.RollOffMaxDistance = 80
+			roar:Play()
+
+			roar.Ended:Connect(function()
+				roar:Destroy()
+			end)
+			tweenModel(char, 15)
+
+			for i, v in pairs(transparentParts) do
+				v.Transparency = 0
+			end
+			for i, v in pairs(transparentDecals) do
+				v.Transparency = 0
+			end
+			char.HumanoidRootPart.Anchored = false
+			toggle.Visible = true
+		else
+			toggle.Visible = false
+			toggle.Text = 'SHIFT'
+			enabledInt.Value = false
+
+			local anim = Instance.new("Animation")
+			anim.AnimationId = "rbxassetid://17107937300"
+			anim.Name = "UnShift"
+
+			hum.Animator:LoadAnimation(anim):Play()
+
+			hum:GetPropertyChangedSignal("MoveDirection"):Connect(function()
+				if hum.MoveDirection.Magnitude > 0 then
+					for i, v in pairs(hum:GetPlayingAnimationTracks()) do
+						if v.Name == "UnShift" then
+							v:Stop()
+						end
+					end
+				end
+			end)
+
+			tweenModel(char, 1)
+
+			local steam = Instance.new("ParticleEmitter", char.Torso)
+			steam.Name = "Steam"
+			steam.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(109, 109, 109))
+			steam.LightEmission = 1 steam.LightInfluence = 0
+			steam.Orientation = Enum.ParticleOrientation.FacingCamera
+			steam.Size = NumberSequence.new(1, 10)	
+			steam.Texture = "rbxassetid://7731347137"
+			steam.Transparency = NumberSequence.new(0, 1) steam.EmissionDirection = Enum.NormalId.Top
+			steam.ZOffset = -0.1
+			steam.Lifetime = NumberRange.new(2, 3) steam.Rate = 20
+			steam.Rotation = NumberRange.new(0, 360) steam.RotSpeed = NumberRange.new(1, 13) steam.Speed = NumberRange.new(5)	
+			steam.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
+			steam.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume steam.SpreadAngle = Vector2.new(1, 1)
+			steam.Acceleration = Vector3.new(0, 0.1, 0) steam.VelocityInheritance = 0.5
+
+			local specs = Instance.new("ParticleEmitter", char.Torso)
+			specs.Name = "Specs"
+			specs.Brightness = 3
+			specs.Color = ColorSequence.new(Color3.fromRGB(255, 85, 0))
+			specs.LightEmission = 1 specs.LightInfluence = 0
+			specs.Orientation = Enum.ParticleOrientation.FacingCamera
+			specs.Size = NumberSequence.new(1)	
+			specs.Texture = "rbxassetid://10567383038"
+			specs.Transparency = NumberSequence.new(0, 1) specs.EmissionDirection = Enum.NormalId.Top
+			specs.ZOffset = -0.1
+			specs.Lifetime = NumberRange.new(0.25) specs.Rate = 100
+			specs.Rotation = NumberRange.new(-360, 360) specs.RotSpeed = NumberRange.new(-75, 75) specs.Speed = NumberRange.new(1.7, 3.8)	
+			specs.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
+			specs.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+			specs.LockedToPart = true
+
+			local ambience = Instance.new("Sound", char.Head)
+			ambience.Name = "SteamSound"
+			ambience.SoundId = "rbxassetid://5057582133"
+			ambience.Volume = 0.5
+			ambience.Looped = true
+			ambience.RollOffMaxDistance = 35
+			ambience:Play()
+
+			local wrap
+
+			wrap = task.spawn(function()
+				task.wait(15)
+				if steam and specs and ambience then
+					steam:Destroy()
+					specs:Destroy()
+					ambience:Destroy()
+				end
+				coroutine.yield()
+				coroutine.close(wrap)
+			end)
+			task.wait(1)
+			toggle.Visible = true
+		end
+	end
+end)
+
+plr.CharacterAdded:Connect(function()
+	enable()
+end)
