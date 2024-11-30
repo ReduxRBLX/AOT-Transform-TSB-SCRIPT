@@ -449,7 +449,7 @@ toggle.MouseButton1Click:Connect(function()
 				local foundingMusic = Instance.new("Sound", workspace)
 				foundingMusic.Name = "FoundingMusic"
 				foundingMusic.SoundId = "rbxassetid://1840489003"
-				foundingMusic.Volume = 0.5
+				foundingMusic.Volume = 0.75
 				foundingMusic:Play()
 			end
 
@@ -512,6 +512,11 @@ toggle.MouseButton1Click:Connect(function()
 
 			local loadedAnim = deadTitan.Humanoid.Animator:LoadAnimation(anim)
 			loadedAnim:Play()
+			
+			char.HumanoidRootPart.CFrame = deadTitan.Head.CFrame
+			
+			local moveOut = ts:Create(char.HumanoidRootPart, TweenInfo.new(1), {CFrame = deadTitan.Head.CFrame * CFrame.new(0,-3, 2)})
+			moveOut:Play()
 
 			local freeze
 
@@ -629,17 +634,10 @@ toggle.MouseButton1Click:Connect(function()
 	end
 end)
 
-local chance = 100
+local obtained = false
 
-local function foundingTitanChance()
-	local random = math.random()
-
-	if random <= chance then
-		return "GotFounding"
-	end
-end
-
-if foundingTitan == true then
+if foundingTitan == true and obtained == false then
+	obtained = true
 	local info = Instance.new("TextLabel", UI)
 	info.Name = "Obtained"
 	info.BackgroundTransparency = 1
@@ -658,13 +656,14 @@ end
 
 plr.Character:WaitForChild("Humanoid").Died:Connect(function()
 	if foundingTitan == false then
-		local getFounding = foundingTitanChance()
+		local chance = math.random(1, 100)
 
-		if getFounding == "GotFounding" then
+		if chance == 1 then
 			foundingTitan = true
+			obtained = false
 		end
 	end
-	
+
 	if workspace:FindFirstChild("FoundingMusic") then
 		workspace.FoundingMusic:Destroy()
 	end
@@ -673,7 +672,8 @@ end)
 plr.CharacterAdded:Connect(function()
 	enable()
 	
-	if foundingTitan == true then
+	if foundingTitan == true and obtained == false then
+		obtained = true
 		local info = Instance.new("TextLabel", UI)
 		info.Name = "Obtained"
 		info.BackgroundTransparency = 1
@@ -692,10 +692,11 @@ plr.CharacterAdded:Connect(function()
 	
 	plr.Character:WaitForChild("Humanoid").Died:Connect(function()
 		if foundingTitan == false then
-			local getFounding = foundingTitanChance()
+			local chance = math.random(1, 100)
 			
-			if getFounding == "GotFounding" then
+			if chance == 1 then
 				foundingTitan = true
+				obtained = false
 			end
 		end
 		
