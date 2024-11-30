@@ -5,7 +5,7 @@ local function tweenModel(model, scale)
 	local numValue = Instance.new("NumberValue")
 	numValue.Parent = model
 	numValue.Value = model:GetScale()
- 
+
 	local targetScale = scale
 
 	local tweenInfo = TweenInfo.new(1,Enum.EasingStyle.Linear,Enum.EasingDirection.InOut)
@@ -30,7 +30,7 @@ local function fadeUI(FadeFrame)
 			local success = pcall(function() hasProperty(v, "Visible") end)
 
 			if success then
-				if v.Visible == true and v.Name ~= "RefusedText" then
+				if v.Visible == true then
 					v.Visible = false
 					table.insert(fadedObjs, v)
 				end
@@ -39,7 +39,7 @@ local function fadeUI(FadeFrame)
 
 		local prevTransparency = FadeFrame.BackgroundTransparency
 
-		local Framefade = ts:Create(FadeFrame, TweenInfo.new(1), {BackgroundTransparency = 1})
+		local Framefade = ts:Create(FadeFrame, TweenInfo.new(5), {BackgroundTransparency = 1})
 		Framefade:Play()
 		Framefade.Completed:Wait()
 		FadeFrame.Visible = false
@@ -70,7 +70,7 @@ local function enable()
 	plr = game:GetService("Players").LocalPlayer
 	char = plr.Character or plr.CharacterAdded:Wait()
 	hum = char:WaitForChild("Humanoid")
-	
+
 	if not plr:FindFirstChild("Transformed") then
 		enabledInt = Instance.new("BoolValue", plr)
 		enabledInt.Name = "Transformed"
@@ -78,12 +78,12 @@ local function enable()
 	else
 		enabledInt = plr:FindFirstChild("Transformed") 
 		enabledInt:Destroy()
-		
+
 		enabledInt = Instance.new("BoolValue", plr)
 		enabledInt.Name = "Transformed"
 		enabledInt.Value = false
 	end
-	
+
 	if not plr.PlayerGui:FindFirstChild("AOTScript") then
 		UI = Instance.new("ScreenGui", plr.PlayerGui)
 		UI.Name = "AOTScript"
@@ -92,9 +92,9 @@ local function enable()
 	else
 		UI = plr.PlayerGui:FindFirstChild("AOTScript")
 	end
-	
+
 	local cred
-	
+
 	if not UI:FindFirstChild("Credits") then
 		cred = Instance.new("TextLabel", UI)
 		cred.Name = "Credits"
@@ -128,7 +128,7 @@ local function enable()
 		toggle = UI:FindFirstChild("Button")
 		toggle.Text = 'SHIFT'
 	end
-	
+
 	local uiCorner
 
 	if not toggle:FindFirstChild("UICorner") then	
@@ -136,9 +136,9 @@ local function enable()
 	else
 		uiCorner = toggle:FindFirstChild("UICorner")
 	end
-	
+
 	local uiStroke
-	
+
 	if not toggle:FindFirstChild("UIStroke") then	
 		uiStroke = Instance.new("UIStroke", toggle)
 		uiStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -151,6 +151,11 @@ end
 
 enable()
 
+local prevText
+local prevColor
+
+local foundingTitan = false
+
 toggle.MouseButton1Click:Connect(function()
 	if hum and hum.Health > 0 then
 		if enabledInt.Value == false then
@@ -159,6 +164,26 @@ toggle.MouseButton1Click:Connect(function()
 			enabledInt.Value = true
 
 			char.HumanoidRootPart.Anchored = true
+
+			local screenGui = plr.PlayerGui:FindFirstChild("ScreenGui")
+
+			if screenGui then
+				if screenGui:FindFirstChild("MagicHealth") then
+					prevText = screenGui.MagicHealth.TextLabel.Text
+					prevColor = screenGui.MagicHealth.Health.Bar.ImageColor3
+
+					screenGui.MagicHealth.Health.Bar.ImageColor3 = Color3.fromRGB(255, 170, 0)
+					screenGui.MagicHealth.Health.Bar.Bar.ImageColor3 = Color3.fromRGB(255, 170, 0)
+					screenGui.MagicHealth.TextLabel.Text = "IN TITAN FORM"
+					screenGui.MagicHealth.TextLabel.TextLabel.Text = "IN TITAN FORM"
+				end
+			end
+
+			local inventory = plr.PlayerGui:FindFirstChild("Hotbar")
+
+			if inventory then
+				inventory.Enabled = false
+			end
 
 			local transparentParts = {}
 			local transparentDecals = {}
@@ -179,9 +204,29 @@ toggle.MouseButton1Click:Connect(function()
 
 			local frame = Instance.new("Frame", UI)
 			frame.BackgroundColor3 = Color3.fromRGB(255, 170, 0)
-			frame.BackgroundTransparency = 0.75
+			frame.BackgroundTransparency = 0
 			frame.Size = UDim2.new(1, 0, 1, 0)
 			frame.Visible = true
+
+			fadeUI(frame)
+
+			local wrap
+
+			wrap = task.spawn(function()
+				for i = 1, 100 do
+					local x = math.random(-100,100)/50
+					local y = math.random(-100,100)/50
+					local z = math.random(-100,100)/50
+
+					hum.CameraOffset = Vector3.new(x,y,z)
+					wait()
+				end
+
+				hum.CameraOffset = Vector3.new(0, 0, 0)
+
+				coroutine.yield()
+				coroutine.close(wrap)
+			end)
 
 			cam.FieldOfView = 90
 
@@ -261,7 +306,8 @@ toggle.MouseButton1Click:Connect(function()
 			lightning.Drag = 5 lightning.Acceleration = Vector3.new(0, 10, 0)
 
 			local b = Instance.new("Attachment", transformMain)
-			b.WorldPosition = transformMain.Position + Vector3.new(0, 3, 0)
+			b.WorldPosition = transformMain.Position + Vector3.new(0, 2, 0)
+
 			local T = Instance.new("Attachment", transformMain)
 			T.WorldPosition = transformMain.Position + Vector3.new(0, 500, 0)
 
@@ -302,16 +348,68 @@ toggle.MouseButton1Click:Connect(function()
 			beam2.FaceCamera = true
 			beam2.Segments = 10 beam.Width0 = 15 beam.Width1 = 15
 
+			local light = Instance.new("PointLight", transformMain)
+			light.Color = Color3.fromRGB(234, 234, 0)
+			light.Brightness = 2
+			light.Range = 100
+
+			local smoke = game:GetService("ReplicatedStorage").Resources:WaitForChild("KJEffects"):WaitForChild("BARRAGESMOKE")
+			local smoke2 = game:GetService("ReplicatedStorage").Resources:WaitForChild("KJEffects"):WaitForChild("1and2smoke")
+			local boom = game:GetService("ReplicatedStorage").Resources:WaitForChild("KJEffects"):WaitForChild("stoic bomb boom entrance"):Clone()
+			local speedlines = game:GetService("ReplicatedStorage").Resources:WaitForChild("KJEffects"):WaitForChild("stoicbombspeedlines"):Clone()
+			local explosion = game:GetService("ReplicatedStorage").Resources:WaitForChild("FiveSeasonsFX"):WaitForChild("FinalExplosion")
+
+			if smoke then
+				for i, v in pairs(smoke.BARRAGESMOKE:GetChildren()) do
+					local clone = v:Clone()
+					clone.Enabled = true
+					clone.Parent = b
+				end
+			end
+
+			if smoke2 then
+				for i, v in pairs(smoke2["1and2smoke"]:GetChildren()) do
+					local clone = v:Clone()
+					clone.Enabled = true
+					clone.Parent = b
+				end
+			end
+
+			boom.Parent = transformMain
+			boom.CFrame = b.WorldCFrame
+			boom.Orientation = Vector3.new(0,0,0)
+			task.wait(0.1)
+
+			speedlines.Parent = transformMain
+			speedlines.CFrame = transformMain.CFrame
+			speedlines.speedylines.Enabled = true
+			speedlines.speedylines.Color = ColorSequence.new(Color3.fromRGB(230, 77, 0))
+			task.wait(0.1)
+
+			game:GetService('RunService').Stepped:Wait()
+
+			if explosion then
+				for i, v in pairs(explosion.Particles:GetDescendants()) do
+					if v:IsA("ParticleEmitter") and v.Parent.Name ~= "Wind" and v.Color ~= Color3.fromRGB(0,0,0) and v.Name ~= "dust" and v.Name ~= "wind2"then
+						local clone = v:Clone()
+
+						if clone.Name ~= "Rocks" and clone.Name ~= "Wind" then
+							clone.Color = ColorSequence.new(Color3.fromRGB(193, 103, 6))
+						end
+						clone.Enabled = true
+						clone.Parent = b
+					end
+				end
+			end
+
 			local shiftSound = Instance.new("Sound", workspace)
 			shiftSound.SoundId = "rbxassetid://6956875383"
 			shiftSound.Volume = 0.65
 			shiftSound:Play()
-
+			
 			shiftSound.Ended:Wait()
 			cam.FieldOfView = 70
-			fadeUI(frame)
 			shiftSound:Destroy()
-			transformMain:Destroy()
 
 			local anim = Instance.new("Animation")
 			anim.AnimationId = "rbxassetid://17086333563"
@@ -330,7 +428,7 @@ toggle.MouseButton1Click:Connect(function()
 					end
 				end
 			end)
-			
+
 			local roar = Instance.new("Sound", workspace)
 			roar.SoundId = "rbxassetid://7182253058"
 			roar.Volume = 0.7
@@ -340,7 +438,22 @@ toggle.MouseButton1Click:Connect(function()
 			roar.Ended:Connect(function()
 				roar:Destroy()
 			end)
-			tweenModel(char, 15)
+
+
+			if foundingTitan == false then
+				tweenModel(char, 15)
+			else
+				tweenModel(char, 50)
+				foundingTitan = false
+				
+				local foundingMusic = Instance.new("Sound", workspace)
+				foundingMusic.Name = "FoundingMusic"
+				foundingMusic.SoundId = "rbxassetid://1840489003"
+				foundingMusic.Volume = 0.5
+				foundingMusic:Play()
+			end
+
+			char.HumanoidRootPart.Anchored = false
 
 			for i, v in pairs(transparentParts) do
 				v.Transparency = 0
@@ -348,30 +461,91 @@ toggle.MouseButton1Click:Connect(function()
 			for i, v in pairs(transparentDecals) do
 				v.Transparency = 0
 			end
-			char.HumanoidRootPart.Anchored = false
+			
+			local steam = Instance.new("ParticleEmitter", char.Torso)
+			steam.Name = "Steam"
+			steam.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(109, 109, 109))
+			steam.LightEmission = 1 steam.LightInfluence = 0
+			steam.Orientation = Enum.ParticleOrientation.FacingCamera
+			steam.Size = NumberSequence.new(1, 10)	
+			steam.Texture = "rbxassetid://7731347137"
+			steam.Transparency = NumberSequence.new(0.5) steam.EmissionDirection = Enum.NormalId.Top
+			steam.ZOffset = -0.1
+			steam.Lifetime = NumberRange.new(2, 3) steam.Rate = 20
+			steam.Rotation = NumberRange.new(0, 360) steam.RotSpeed = NumberRange.new(1, 13) steam.Speed = NumberRange.new(5)	
+			steam.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
+			steam.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume steam.SpreadAngle = Vector2.new(1, 1)
+			steam.Acceleration = Vector3.new(0, 0.1, 0) steam.VelocityInheritance = 0.5
+			
+			game:GetService("Debris"):addItem(steam, 8)
+
+			light.Enabled = false
+			task.wait(0.65)
+			transformMain:Destroy()
+
 			toggle.Visible = true
 		else
 			toggle.Visible = false
 			toggle.Text = 'SHIFT'
 			enabledInt.Value = false
 
+			char.HumanoidRootPart.Anchored = true
+			char.Archivable = true
+			task.wait(0.5)
+
+			local deadTitan = char:Clone()
+
+			repeat task.wait() until deadTitan:WaitForChild("Humanoid")
+
+			deadTitan.PrimaryPart.Anchored = true
+			deadTitan.Name = plr.Name.."'s Titan"
+			deadTitan.Parent = workspace
+			deadTitan.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame
+			deadTitan.Head.CanCollide = false
+			deadTitan.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+
 			local anim = Instance.new("Animation")
 			anim.AnimationId = "rbxassetid://17107937300"
 			anim.Name = "UnShift"
 
-			hum.Animator:LoadAnimation(anim):Play()
+			game:GetService('RunService').Stepped:Wait()
 
-			hum:GetPropertyChangedSignal("MoveDirection"):Connect(function()
-				if hum.MoveDirection.Magnitude > 0 then
-					for i, v in pairs(hum:GetPlayingAnimationTracks()) do
-						if v.Name == "UnShift" then
-							v:Stop()
-						end
-					end
-				end
+			local loadedAnim = deadTitan.Humanoid.Animator:LoadAnimation(anim)
+			loadedAnim:Play()
+
+			local freeze
+
+			freeze = task.spawn(function()
+				task.wait(1.75)
+				loadedAnim:AdjustSpeed(0)
 			end)
 
-			tweenModel(char, 1)
+			char:ScaleTo(1)
+
+			char.Archivable = false
+			task.wait(0.1)
+
+			local trans
+
+			trans = task.spawn(function()
+				for i, v in pairs(deadTitan:GetChildren()) do
+					if v:IsA("BasePart") then
+						local tween = ts:Create(v, TweenInfo.new(15), {Transparency = 1})	
+						tween:Play()
+						v.CanCollide = false
+					end	
+				end
+
+				for i, v in pairs(deadTitan:GetDescendants()) do
+					if v:IsA("Decal") or v:IsA("Accessory") then
+						v:Destroy()
+					end	
+				end
+				task.wait(15)
+				deadTitan:Destroy()
+				coroutine.yield()
+				coroutine.close(trans)
+			end)
 
 			local steam = Instance.new("ParticleEmitter", char.Torso)
 			steam.Name = "Steam"
@@ -411,6 +585,31 @@ toggle.MouseButton1Click:Connect(function()
 			ambience.Looped = true
 			ambience.RollOffMaxDistance = 35
 			ambience:Play()
+			
+			if workspace:FindFirstChild("FoundingMusic") then
+				workspace.FoundingMusic:Destroy()
+			end
+
+			char.HumanoidRootPart.Anchored = false
+
+			local screenGui = plr.PlayerGui:FindFirstChild("ScreenGui")
+
+			if screenGui then
+				if screenGui:FindFirstChild("MagicHealth") then
+					if prevText and prevColor then
+						screenGui.MagicHealth.Health.Bar.ImageColor3 = prevColor
+						screenGui.MagicHealth.Health.Bar.Bar.ImageColor3 = prevColor
+						screenGui.MagicHealth.TextLabel.Text = prevText
+						screenGui.MagicHealth.TextLabel.TextLabel.Text = prevText
+					end
+				end
+			end
+
+			local inventory = plr.PlayerGui:FindFirstChild("Hotbar")
+
+			if inventory then
+				inventory.Enabled = true
+			end
 
 			local wrap
 
@@ -430,6 +629,78 @@ toggle.MouseButton1Click:Connect(function()
 	end
 end)
 
+local chance = 100
+
+local function foundingTitanChance()
+	local random = math.random()
+
+	if random <= chance then
+		return "GotFounding"
+	end
+end
+
+if foundingTitan == true then
+	local info = Instance.new("TextLabel", UI)
+	info.Name = "Obtained"
+	info.BackgroundTransparency = 1
+	info.Position = UDim2.new(0.198, 0, 0.565, 0)
+	info.Size = UDim2.new(0.604, 0, 0.063, 0)
+	info.Font = Enum.Font.Fondamento
+	info.FontFace.Style = Enum.FontStyle.Italic
+	info.FontFace.Weight = Enum.FontWeight.Bold
+	info.Text = "FOUNDING TITAN OBTAINED!"
+	info.TextColor3 = Color3.fromRGB(255, 255, 255)
+	info.TextScaled = true
+	info.TextStrokeTransparency = 0.85
+	task.wait(3)
+	info:Destroy()
+end
+
+plr.Character:WaitForChild("Humanoid").Died:Connect(function()
+	if foundingTitan == false then
+		local getFounding = foundingTitanChance()
+
+		if getFounding == "GotFounding" then
+			foundingTitan = true
+		end
+	end
+	
+	if workspace:FindFirstChild("FoundingMusic") then
+		workspace.FoundingMusic:Destroy()
+	end
+end)
+
 plr.CharacterAdded:Connect(function()
 	enable()
+	
+	if foundingTitan == true then
+		local info = Instance.new("TextLabel", UI)
+		info.Name = "Obtained"
+		info.BackgroundTransparency = 1
+		info.Position = UDim2.new(0.198, 0, 0.565, 0)
+		info.Size = UDim2.new(0.604, 0, 0.063, 0)
+		info.Font = Enum.Font.Fondamento
+		info.FontFace.Style = Enum.FontStyle.Italic
+		info.FontFace.Weight = Enum.FontWeight.Bold
+		info.Text = "FOUNDING TITAN OBTAINED!"
+		info.TextColor3 = Color3.fromRGB(255, 255, 255)
+		info.TextScaled = true
+		info.TextStrokeTransparency = 0.85
+		task.wait(3)
+		info:Destroy()
+	end
+	
+	plr.Character:WaitForChild("Humanoid").Died:Connect(function()
+		if foundingTitan == false then
+			local getFounding = foundingTitanChance()
+			
+			if getFounding == "GotFounding" then
+				foundingTitan = true
+			end
+		end
+		
+		if workspace:FindFirstChild("FoundingMusic") then
+			workspace.FoundingMusic:Destroy()
+		end
+	end)
 end)
