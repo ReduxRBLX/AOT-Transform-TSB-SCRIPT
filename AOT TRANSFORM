@@ -1,1 +1,1 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/ReduxRBLX/AOT-Transform-TSB-SCRIPT/refs/heads/main/Script?token=GHSAT0AAAAAAC275X7LS7RZBNFF4556MTUAZ2LEYGA"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/ReduxRBLX/AOT-Transform-TSB-SCRIPT/refs/heads/main/Script"))()
